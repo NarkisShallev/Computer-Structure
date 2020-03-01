@@ -1,0 +1,46 @@
+Pstring* replaceChar(Pstring* pstr, char oldChar, char newChar){
+    int counter = pstr->len;
+    pstr++;
+    loop:
+        if (counter == 0){
+            goto done;
+        }
+        if(*pstr == oldChar){
+            goto replace;
+        }
+    afterReplace:
+        pstr++;
+        counter--;
+        goto loop;
+    }
+    replace:
+        *pstr = newChar;
+        goto afterReplace;
+    done:...
+}
+/****************************************
+%rdx = pointer to pstr
+%rcx = len of pstr
+%r8 = counter
+****************************************/
+replaceChar:
+        movq %rdi, %rdx 		#backup pointer of pstr on %rdx
+        movzbq (%rdi), %rcx 	#put len of pstr on caller save %rcx
+        movzbq (%rcx), %r8 		#init counter = len
+        leaq 1(%rdx), %rdx 		#pass on the len of pstr in the memory
+.loop1:
+        cmpq $0,%r8             #counter==?0
+        je .done1                #if counter == 0 jump to done
+        cmpb %sil, (%rdx)       #oldChar ==? the char in pstr
+        je .replace 		    #if oldChar == the char in pstr jump to replace
+.afterReplace:
+        leaq 1(%rdx), %rdx      #pass to the next char in pstr
+        subq $1,%r8             #counter--
+        jmp .loop1              #jump to another loop
+.replace
+        movb %dl, (%rdx) 		#replace the char in pstr to newChar
+        jmp .afterReplace
+.done1:
+        movq %rdi,%rax 		    #put the pointer to pstr on the return val
+        ret
+
